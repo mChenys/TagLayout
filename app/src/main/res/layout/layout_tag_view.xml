@@ -22,20 +22,6 @@
             android:textColorHint="@android:color/white"
             android:textSize="12dp" />
 
-        <EditText
-            android:id="@+id/edt_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@null"
-            android:gravity="center_vertical"
-            android:hint="标签"
-            android:imeOptions="actionDone"
-            android:maxEms="20"
-            android:singleLine="true"
-            android:textColor="@android:color/white"
-            android:textColorHint="@android:color/white"
-            android:textSize="12dp"
-            android:visibility="gone" />
     </RelativeLayout>
 
 </LinearLayout>

@@ -1,37 +1,44 @@
 package mchenys.net.csdn.blog.imagetag;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Environment;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 
-@SuppressLint("NewApi")
 public class TagLayout extends RelativeLayout implements GestureDetector.OnGestureListener {
-    private static final String TAG = "PictureTagLayout";
-    float startX = 0;
-    float startY = 0;
-    int startcurrEditViewLeft = 0;
-    int startcurrEditViewTop = 0;
-    private TagView currEditView;//点击同一个tag赋值,新增为null
+    private int mTouchBeginX = 0;//开始触摸的x坐标
+    private int mTouchBeginY = 0;//开始触摸的y坐标
+    private TagView mCurrTagView;//点击同一个tag赋值,新增为null
+    //支持添加,编辑,删除,移动tag
+    private boolean enableAdd, enableEdit, enableDelete, enableMove;
+    //手势监听器
     private GestureDetector detector;
+    //自定义背景图片的ImageView
+    private ImageView mBackgroundPic;
 
-    public enum Status {Normal, Edit}
-
-    public enum Direction {Left, Right}
+    //背景图片的方向
+    public enum Direction {
+        Left, Right
+    }
 
     public TagLayout(Context context) {
         super(context, null);
@@ -51,21 +58,62 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         this.mOnTagOperationCallback = callback;
     }
 
+    public void setEnableAdd(boolean enableAdd) {
+        this.enableAdd = enableAdd;
+    }
+
+    public void setEnableEdit(boolean enableEdit) {
+        this.enableEdit = enableEdit;
+    }
+
+    public void setEnableDelete(boolean enableDelete) {
+        this.enableDelete = enableDelete;
+    }
+
+    public void setEnableMove(boolean enableMove) {
+        this.enableMove = enableMove;
+    }
+
+    /**
+     * 返回显示背景图片的控件,用户获取后可以设置想要的背景图
+     *
+     * @return
+     */
+    public ImageView getBackgroundPic() {
+        return mBackgroundPic;
+    }
+
     public TagLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mBackgroundPic = new ImageView(context);
+        mBackgroundPic.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        addView(mBackgroundPic, 0, new ViewGroup.LayoutParams(-1, -1));
+
         detector = new GestureDetector(getContext(), this);
     }
 
 
-    //移动tag
+    /**
+     * 移动tag
+     *
+     * @param deltaX
+     * @param deltaY
+     */
     private void moveView(float deltaX, float deltaY) {
-        if (currEditView == null) return;
-        int x = (int) (deltaX + startcurrEditViewLeft);
-        int y = (int) (deltaY + startcurrEditViewTop);
-        currEditView.setPosition(x, y);
+        if (mCurrTagView != null && enableMove) {
+            int x = (int) (mTouchBeginX + deltaX);
+            int y = (int) (mTouchBeginY + deltaY);
+            mCurrTagView.setPosition(x, y);
+        }
     }
 
-    //循环获取子view，判断xy是否在子view上，即判断是否按住了子view
+    /**
+     * 循环获取子view，判断xy是否在子view上，即判断是否按住了子view
+     *
+     * @param x
+     * @param y
+     * @return 返回当前触摸的tagview
+     */
     private TagView hasView(float x, float y) {
         for (int index = 0; index < this.getChildCount(); index++) {
             View view = getChildAt(index);
@@ -78,11 +126,11 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
                 boolean contains = rect.contains(x, y);
                 //如果是与子view重叠则返回真,表示已经有了view不需要添加新view了
                 if (contains) {
-                    currEditView = (TagView) view;
-                    currEditView.bringToFront();
-                    startcurrEditViewLeft = currEditView.getLeft();
-                    startcurrEditViewTop = currEditView.getTop();
-                    return currEditView;
+                    mCurrTagView = (TagView) view;
+                    mCurrTagView.bringToFront();
+                    mTouchBeginX = mCurrTagView.getLeft();
+                    mTouchBeginY = mCurrTagView.getTop();
+                    return mCurrTagView;
                 }
             }
         }
@@ -94,46 +142,65 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         return detector.onTouchEvent(event);
     }
 
-    //按下根据位置判断是否要添加tag,如果按下的是tag当前的位置则标记为currEditView
+    /**
+     * 按下根据位置判断是否要添加tag,如果按下的是tag当前的位置则标记为mCurrTagView
+     *
+     * @param e
+     * @return
+     */
     @Override
     public boolean onDown(MotionEvent e) {
-        currEditView = hasView(e.getX(), e.getY());
+        mCurrTagView = hasView(e.getX(), e.getY());
         return true;
     }
 
 
-    //单击添加或编辑当前的currEditView
+    /**
+     * 单击添加或编辑当前的mCurrTagView
+     *
+     * @param e
+     * @return
+     */
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
-        startX = e.getX();
-        startY = e.getY();
-        TagView tagView = hasView(startX, startY);
+        TagView tagView = hasView(e.getX(), e.getY());
         if (null == tagView) {
-            //addTagView(startX, startY);
-            if (null != mOnTagOperationCallback) {
-                mOnTagOperationCallback.onAdd(startX, startY);
+            if (null != mOnTagOperationCallback && enableAdd) {
+                mOnTagOperationCallback.onAdd(e.getX(), e.getY());
             }
         } else {
-            if (null != mOnTagOperationCallback) {
+            if (null != mOnTagOperationCallback && enableEdit) {
                 mOnTagOperationCallback.onEdit(tagView);
             }
         }
         return true;
     }
 
-    //滚动当前的currEditView
+    /**
+     * 滚动当前的mCurrTagView
+     *
+     * @param e1
+     * @param e2
+     * @param distanceX
+     * @param distanceY
+     * @return
+     */
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         moveView(e2.getX() - e1.getX(), e2.getY() - e1.getY());
         return true;
     }
 
-    //长按删除当前的currEditView
+    /**
+     * 长按删除当前的mCurrTagView
+     *
+     * @param e
+     */
     @Override
     public void onLongPress(MotionEvent e) {
-        if (currEditView != null) {
-            if (null != mOnTagOperationCallback) {
-                mOnTagOperationCallback.onDelete(currEditView);
+        if (mCurrTagView != null) {
+            if (null != mOnTagOperationCallback && enableDelete) {
+                mOnTagOperationCallback.onDelete(mCurrTagView);
             }
         }
     }
@@ -196,15 +263,6 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
             return this;
         }
 
-        public Direction getDirection() {
-            return direction;
-        }
-
-        public Tag setDirection(Direction direction) {
-            this.direction = direction;
-            return this;
-        }
-
         public Drawable getLeftIcon() {
             return mLeftIcon;
         }
@@ -235,6 +293,11 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
 
     private List<TagView> mTagViews = new ArrayList<TagView>();
 
+    /**
+     * 还原所有tag
+     *
+     * @param tags 需要被还原的tag
+     */
     public void restoreTag(List<Tag> tags) {
         if (null != tags) {
             for (Tag tag : tags) {
@@ -254,7 +317,6 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
                         view.setRightIcon(tag.getRightIcon());
                     }
                     view.setDirection(tag.getX() >= getWidth() * 0.5f ? Direction.Right : Direction.Left);
-                    view.setStatus(Status.Normal);//状态
                     view.setParent(tag.getParent());//绑定父亲view
                     addView(view);//显示
                     view.setPosition(tag.getX(), tag.getY());//定位
@@ -265,6 +327,11 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
 
     }
 
+    /**
+     * 添加新的tag
+     *
+     * @param tag
+     */
     public void addTag(Tag tag) {
         if (null != tag && null == hasView(tag.getX(), tag.getY())) {
             TagView view = new TagView(getContext());
@@ -282,14 +349,13 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
                 view.setRightIcon(tag.getRightIcon());
             }
             view.setDirection(tag.getX() >= getWidth() * 0.5f ? Direction.Right : Direction.Left);
-            view.setStatus(Status.Normal);//状态
-            view.setParent(tag.getParent());//绑定父亲view
+            view.setParent(tag.getParent());//绑定父view
             addView(view);//显示
             //定位
             view.measureSelf();
             if (tag.getX() > getWidth() * 0.5) {
                 if (tag.getX() > getWidth() * 0.5 + view.getMeasuredWidth()) {
-                    view.setPosition((int) (tag.getX() - view.getMeasuredWidth()+15), (int) (tag.getY() - view.getMeasuredHeight() / 2));
+                    view.setPosition((int) (tag.getX() - view.getMeasuredWidth() + 15), (int) (tag.getY() - view.getMeasuredHeight() / 2));
                 } else {
                     view.setPosition((int) (tag.getX()), (int) (tag.getY() - view.getMeasuredHeight() / 2));
                 }
@@ -307,6 +373,11 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         return tag;
     }
 
+    /**
+     * 获取已添加的所有tag
+     *
+     * @return
+     */
     public List<Tag> getAllTag() {
         List<Tag> tagList = new ArrayList<Tag>();
         for (TagView view : mTagViews) {
@@ -321,6 +392,9 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         return tagList;
     }
 
+    /**
+     * 清除所有tag
+     */
     public void cleanAllTag() {
         for (TagView view : mTagViews) {
             removeView(view);
@@ -328,12 +402,18 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         mTagViews.clear();
     }
 
+    /**
+     * 隐藏所有tag
+     */
     public void hideAllTag() {
         for (TagView view : mTagViews) {
             view.setVisibility(View.GONE);
         }
     }
 
+    /**
+     * 显示所有tag
+     */
     public void showAllTag() {
         for (TagView view : mTagViews) {
             view.setVisibility(View.VISIBLE);
@@ -341,14 +421,12 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
     }
 
 
-    class TagView extends RelativeLayout implements TextView.OnEditorActionListener {
+    class TagView extends RelativeLayout {
 
         private TextView labelTv;
-        private EditText labelEdt;
         private RelativeLayout layout;
 
         private Direction direction = Direction.Left;
-        private InputMethodManager imm;
         private Drawable mLeftIcon, mRightIcon;
         private TagLayout mParent;
 
@@ -361,10 +439,7 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
             super(context);
             LayoutInflater.from(getContext()).inflate(R.layout.layout_tag_view, this, true);
             labelTv = (TextView) findViewById(R.id.tv_label);
-            labelEdt = (EditText) findViewById(R.id.edt_label);
             layout = (RelativeLayout) findViewById(R.id.layout);
-            imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-            labelEdt.setOnEditorActionListener(this);
             mLeftIcon = getResources().getDrawable(R.drawable.bg_left);
             mRightIcon = getResources().getDrawable(R.drawable.bg_right);
         }
@@ -374,31 +449,6 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
             directionChange();
         }
 
-        public void setStatus(Status status) {
-            switch (status) {
-                case Normal:
-                    labelTv.setVisibility(View.VISIBLE);
-                    labelEdt.clearFocus();
-                    labelTv.setText(labelEdt.getText());
-                    labelEdt.setVisibility(View.GONE);
-                    //隐藏键盘
-                    imm.hideSoftInputFromWindow(labelEdt.getWindowToken(), 0);
-                    break;
-                case Edit:
-                    labelTv.setVisibility(View.GONE);
-                    labelEdt.setVisibility(View.VISIBLE);
-                    labelEdt.requestFocus();
-                    //弹出键盘
-                    imm.toggleSoftInput(0, InputMethodManager.SHOW_FORCED);
-                    break;
-            }
-        }
-
-        @Override
-        public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-            setStatus(Status.Normal);
-            return true;
-        }
 
         @Override
         protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -421,7 +471,7 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         }
 
         private String getText() {
-            return labelEdt.getText().toString().trim();
+            return labelTv.getText().toString().trim();
         }
 
         private void setPosition(float x, float y) {
@@ -476,14 +526,50 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         }
 
         public void setText(String text) {
-            labelTv.setText(text);
-            labelEdt.setText(text);
+            if (null != labelTv)
+                labelTv.setText(text);
         }
 
         public void removeSelf() {
-            currEditView = null;
+            mCurrTagView = null;
             mParent.removeView(this);
             mTagViews.remove(this);
         }
+    }
+
+    /**
+     * 生成对应的图片
+     *
+     * @return
+     */
+    public String createBitmap() {
+        setDrawingCacheEnabled(true);
+        setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+        setDrawingCacheBackgroundColor(Color.WHITE);
+        int w = getWidth();
+        int h = getHeight();
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        c.drawColor(Color.WHITE);
+        draw(c);
+        FileOutputStream fos = null;
+        File file = null;
+        try {
+            boolean isHasSDCard = Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
+            if (isHasSDCard) {
+                file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), System.currentTimeMillis() + ".png");
+                fos = new FileOutputStream(file);
+                bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.flush();
+                fos.close();
+            } else {
+                Toast.makeText(getContext(), "未发现sdcard", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            destroyDrawingCache();
+        }
+        return null == file ? null : file.getAbsolutePath();
     }
 }

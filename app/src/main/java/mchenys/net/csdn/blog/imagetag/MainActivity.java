@@ -3,6 +3,7 @@ package mchenys.net.csdn.blog.imagetag;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -21,7 +22,10 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         mTagLayout1 = (TagLayout) findViewById(R.id.ptl1);
         mTagLayout2 = (TagLayout) findViewById(R.id.ptl2);
-
+        mTagLayout1.setEnableAdd(true);
+        mTagLayout1.setEnableEdit(true);
+        mTagLayout1.setEnableDelete(true);
+        mTagLayout1.setEnableMove(true);
         mTagLayout1.setOnTagOperationCallback(new TagLayout.OnTagOperationCallback() {
             @Override
             public void onAdd(final float x, final float y) {
@@ -109,5 +113,13 @@ public class MainActivity extends Activity {
     public void onShow(View view) {
         mTagLayout1.showAllTag();
         mTagLayout2.showAllTag();
+    }
+    public void onCreatePic(View view) {
+        Intent intent = new Intent(this, PicActivity.class);
+        intent.putExtra("bitmap", mTagLayout1.createBitmap());
+        startActivity(intent);
+    }
+    public void onChangeBg(View view) {
+        mTagLayout1.getBackgroundPic().setImageResource(R.drawable.change_bg);
     }
 }
