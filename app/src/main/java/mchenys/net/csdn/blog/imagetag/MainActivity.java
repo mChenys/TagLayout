@@ -122,4 +122,7 @@ public class MainActivity extends Activity {
     public void onChangeBg(View view) {
         mTagLayout1.getBackgroundPic().setImageResource(R.drawable.change_bg);
     }
+    public void onChangeTagBg(View view) {
+        mTagLayout1.changeTagBackground(R.drawable.bg_new_left, R.drawable.bg_new_right);
+    }
 }

@@ -82,6 +82,14 @@
             android:onClick="onChangeBg"
             android:text="切换背景"
             android:textSize="13sp"/>
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="onChangeTagBg"
+            android:text="切换标签"
+            android:textSize="13sp"/>
     </LinearLayout>
 
 </FrameLayout>

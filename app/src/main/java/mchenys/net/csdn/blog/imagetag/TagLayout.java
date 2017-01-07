@@ -420,7 +420,16 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         }
     }
 
-
+    /**
+     * 更换所有tag的背景
+     * @param resl
+     * @param resr
+     */
+    public void changeTagBackground(int resl, int resr) {
+        for (TagView view : mTagViews) {
+            view.changeTagBackground(resl, resr);
+        }
+    }
     class TagView extends RelativeLayout {
 
         private TextView labelTv;
@@ -459,6 +468,11 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
             directionChange();
         }
 
+        private void changeTagBackground(int resl, int resr) {
+            mLeftIcon = getResources().getDrawable(resl);
+            mRightIcon = getResources().getDrawable(resr);
+            directionChange();
+        }
         private void directionChange() {
             switch (direction) {
                 case Left:
