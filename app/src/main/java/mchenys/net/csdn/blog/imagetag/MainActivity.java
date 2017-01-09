@@ -62,10 +62,6 @@ public class MainActivity extends Activity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 String text = editText.getText().toString().trim();
-                                if (TextUtils.isEmpty(text)) {
-                                    Toast.makeText(MainActivity.this, "请输入标签名字", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
                                 tagView.setText(text);
                             }
                         })

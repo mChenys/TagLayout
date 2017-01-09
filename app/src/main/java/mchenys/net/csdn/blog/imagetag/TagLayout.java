@@ -165,7 +165,7 @@ public class TagLayout extends FrameLayout implements GestureDetector.OnGestureL
      */
     @Override
     public boolean onDown(MotionEvent e) {
-        mCurrTagView = hasView(e.getX(), e.getY());
+      //  mCurrTagView = hasView(e.getX(), e.getY());
         return true;
     }
 
@@ -579,9 +579,9 @@ public class TagLayout extends FrameLayout implements GestureDetector.OnGestureL
      * @return
      */
     public String createBitmap() {
-        setDrawingCacheEnabled(true);
-        setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-        setDrawingCacheBackgroundColor(Color.WHITE);
+//        setDrawingCacheEnabled(true);
+//        setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+//        setDrawingCacheBackgroundColor(Color.WHITE);
         int w = getWidth();
         int h = getHeight();
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
