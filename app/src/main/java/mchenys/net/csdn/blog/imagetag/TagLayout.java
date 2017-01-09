@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -25,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class TagLayout extends RelativeLayout implements GestureDetector.OnGestureListener {
+public class TagLayout extends FrameLayout implements GestureDetector.OnGestureListener {
     private int mTouchBeginX = 0;//开始触摸的x坐标
     private int mTouchBeginY = 0;//开始触摸的y坐标
     private TagView mCurrTagView;//点击同一个tag赋值,新增为null
@@ -450,7 +451,7 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         }
     }
 
-    class TagView extends RelativeLayout {
+    class TagView extends FrameLayout {
 
         private TextView labelTv;
         private RelativeLayout layout;
@@ -523,7 +524,7 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
             if (y > mParent.getHeight() - getMeasuredHeight()) {
                 y = mParent.getHeight() - getMeasuredHeight();
             }
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             params.leftMargin = (int) x;
             params.topMargin = (int) y;
             setLayoutParams(params);
