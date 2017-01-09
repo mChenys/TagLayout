@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="maxSize" format="integer"/>
+    <attr name="enableAdd" format="boolean"/>
+    <attr name="enableEdit" format="boolean"/>
+    <attr name="enableDelete" format="boolean"/>
+    <attr name="enableMove" format="boolean"/>
+    <attr name="backgroundLeft" format="reference"/>
+    <attr name="backgroundRight" format="reference"/>
+
+    <declare-styleable name="TagLayout">
+        <attr name="maxSize"/>
+        <attr name="enableAdd"/>
+        <attr name="enableEdit"/>
+        <attr name="enableDelete"/>
+        <attr name="enableMove"/>
+        <attr name="backgroundLeft"/>
+        <attr name="backgroundRight"/>
+    </declare-styleable>
+</resources>

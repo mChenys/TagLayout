@@ -22,10 +22,12 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         mTagLayout1 = (TagLayout) findViewById(R.id.ptl1);
         mTagLayout2 = (TagLayout) findViewById(R.id.ptl2);
-        mTagLayout1.setEnableAdd(true);
-        mTagLayout1.setEnableEdit(true);
-        mTagLayout1.setEnableDelete(true);
-        mTagLayout1.setEnableMove(true);
+        //以下设置可以通过自定义属性设置
+//        mTagLayout1.setMaxTagNum(5);
+//        mTagLayout1.setEnableAdd(true);
+//        mTagLayout1.setEnableEdit(true);
+//        mTagLayout1.setEnableDelete(true);
+//        mTagLayout1.setEnableMove(true);
         mTagLayout1.setOnTagOperationCallback(new TagLayout.OnTagOperationCallback() {
             @Override
             public void onAdd(final float x, final float y) {

@@ -1,6 +1,7 @@
 package mchenys.net.csdn.blog.imagetag;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -34,6 +35,8 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
     private GestureDetector detector;
     //自定义背景图片的ImageView
     private ImageView mBackgroundPic;
+    //允许添加的最大个数,不设置表示无限制
+    private int maxTagNum;
 
     //背景图片的方向
     public enum Direction {
@@ -74,6 +77,10 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         this.enableMove = enableMove;
     }
 
+    public void setMaxTagNum(int maxTagNum) {
+        this.maxTagNum = maxTagNum;
+    }
+
     /**
      * 返回显示背景图片的控件,用户获取后可以设置想要的背景图
      *
@@ -88,8 +95,15 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
         mBackgroundPic = new ImageView(context);
         mBackgroundPic.setScaleType(ImageView.ScaleType.CENTER_CROP);
         addView(mBackgroundPic, 0, new ViewGroup.LayoutParams(-1, -1));
-
         detector = new GestureDetector(getContext(), this);
+        //获取自定义属性
+        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.TagLayout);
+        maxTagNum = array.getInteger(R.styleable.TagLayout_maxSize, 0);
+        enableAdd = array.getBoolean(R.styleable.TagLayout_enableAdd, false);
+        enableEdit = array.getBoolean(R.styleable.TagLayout_enableEdit, false);
+        enableDelete = array.getBoolean(R.styleable.TagLayout_enableDelete, false);
+        enableMove = array.getBoolean(R.styleable.TagLayout_enableMove, false);
+        array.recycle();
     }
 
 
@@ -333,6 +347,10 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
      * @param tag
      */
     public void addTag(Tag tag) {
+        if (maxTagNum != 0 && mTagViews.size()>= maxTagNum){
+            Toast.makeText(getContext(), "已超过设定的最大tag数量", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (null != tag && null == hasView(tag.getX(), tag.getY())) {
             TagView view = new TagView(getContext());
             if (null != tag.getCustomView()) {
@@ -422,6 +440,7 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
 
     /**
      * 更换所有tag的背景
+     *
      * @param resl
      * @param resr
      */
@@ -430,6 +449,7 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
             view.changeTagBackground(resl, resr);
         }
     }
+
     class TagView extends RelativeLayout {
 
         private TextView labelTv;
@@ -473,6 +493,7 @@ public class TagLayout extends RelativeLayout implements GestureDetector.OnGestu
             mRightIcon = getResources().getDrawable(resr);
             directionChange();
         }
+
         private void directionChange() {
             switch (direction) {
                 case Left:
